@@ -20,6 +20,16 @@ const isValidMapKeyType = (key: unknown): key is MapKeyType => {
   return keyType === "string" || keyType === "number";
 };
 
+const convertKey = (key: Array<any>): MapKeyType => {
+  const keyType = typeof key;
+  return Array.from(key).map((byte, index) => {
+      const byteString = byte.toString(16).padStart(2, '0');
+      return [4, 6, 8, 10].includes(index) ? `-${byteString}` : byteString;
+  }).join('') as MapKeyType;
+  // object = object as MapKeyType;
+  // return keyType === "string" || keyType === "number";
+};
+
 type StackMapState = {
   type: State.MAP_KEY | State.MAP_VALUE;
   size: number;
@@ -409,12 +419,9 @@ export class Decoder<ContextType = undefined> {
         } else if (state.type === State.MAP_KEY) {
           if (!isValidMapKeyType(object)) {
             if (Array.isArray(object) && object.length == 16){
-              object = Array.from(object).map((byte, index) => {
-                  const byteString = byte.toString(16).padStart(2, '0');
-                  return [4, 6, 8, 10].includes(index) ? `-${byteString}` : byteString;
-              }).join('') as string;
+              object = convertKey(object);
             }
-            else {
+            if (!isValidMapKeyType(object)) {
               throw new DecodeError("The type of key must be string or number but " + typeof object);
             }
           }

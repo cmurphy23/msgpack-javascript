@@ -20,15 +20,16 @@ const isValidMapKeyType = (key: unknown): key is MapKeyType => {
   return keyType === "string" || keyType === "number";
 };
 
-const convertKey = (key: Array<any>): MapKeyType => {
-  const keyType = typeof key;
-  return Array.from(key).map((byte, index) => {
-      const byteString = byte.toString(16).padStart(2, '0');
-      return [4, 6, 8, 10].includes(index) ? `-${byteString}` : byteString;
-  }).join('') as MapKeyType;
-  // object = object as MapKeyType;
-  // return keyType === "string" || keyType === "number";
+const convertKey = (key: Uint8Array): MapKeyType => {
+  let idKey = ""
+  for (let i=0; i<key.byteLength; i++){
+    let byte = key[i] as number;
+    const byteString = byte.toString(16).padStart(2, '0');
+    idKey += [4, 6, 8, 10].includes(i) ? `-${byteString}` : byteString;    
+  }
+  return idKey;
 };
+
 
 type StackMapState = {
   type: State.MAP_KEY | State.MAP_VALUE;
@@ -418,7 +419,7 @@ export class Decoder<ContextType = undefined> {
           }
         } else if (state.type === State.MAP_KEY) {
           if (!isValidMapKeyType(object)) {
-            if (Array.isArray(object) && object.length == 16){
+            if (object instanceof Uint8Array && object.byteLength == 16){
               object = convertKey(object);
             }
             if (!isValidMapKeyType(object)) {

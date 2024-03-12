@@ -408,7 +408,15 @@ export class Decoder<ContextType = undefined> {
           }
         } else if (state.type === State.MAP_KEY) {
           if (!isValidMapKeyType(object)) {
-            throw new DecodeError("The type of key must be string or number but " + typeof object);
+            if (Array.isArray(object) && object.length == 16){
+              object = Array.from(object).map((byte, index) => {
+                  const byteString = byte.toString(16).padStart(2, '0');
+                  return [4, 6, 8, 10].includes(index) ? `-${byteString}` : byteString;
+              }).join('') as string;
+            }
+            else {
+              throw new DecodeError("The type of key must be string or number but " + typeof object);
+            }
           }
           if (object === "__proto__") {
             throw new DecodeError("The key __proto__ is not allowed");
